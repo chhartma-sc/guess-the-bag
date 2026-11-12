@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guess the Bag</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a classic sports-site page. Cardinal masthead, numbered build steps on the left, a sticky "your player" card with the guess on the right. Stacks to one column on phones. */
+:root{
+  --bg:#f3f1ee;
+  --surface:#ffffff;
+  --ink:#1f1b1a;
+  --muted:#635c58;
+  --line:#e0dad5;
+  --brand:#990000;
+  --brand-ink:#ffffff;
+  --gold:#ffc72c;
+  --soft:#f8ecec;
+  --pick:#990000;
+  --good:#1f7a3a;
+  --display:'Oswald','Arial Narrow',Impact,sans-serif;
+  --body:'Public Sans',Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#151213;--surface:#211c1d;--ink:#f3eeea;--muted:#bdb2ad;--line:#3b3233;--brand:#8a1414;--brand-ink:#ffffff;--gold:#ffc72c;--soft:#3a2224;--pick:#ff8a7a;--good:#7fd492;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151213;--surface:#211c1d;--ink:#f3eeea;--muted:#bdb2ad;--line:#3b3233;--brand:#8a1414;--brand-ink:#ffffff;--gold:#ffc72c;--soft:#3a2224;--pick:#ff8a7a;--good:#7fd492;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.band{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.inner{max-width:1180px;margin-inline:auto}
+header.band{background:var(--brand);color:var(--brand-ink);padding-block:20px;border-bottom:4px solid var(--gold)}
+header .inner{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1;text-transform:uppercase;letter-spacing:.01em}
+.sub{font-size:15px;opacity:.92;max-width:52ch}
+.score{display:flex;gap:8px}
+.score div{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);padding:6px 14px;text-align:center;border-radius:6px;min-width:84px}
+.score b{display:block;font-family:var(--display);font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.score small{font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+nav.band{background:var(--surface);border-bottom:1px solid var(--line)}
+.steps{display:flex;gap:4px;overflow-x:auto;padding-block:10px;list-style:none;margin:0;padding-left:0}
+.steps li{white-space:nowrap;font-size:14px;font-weight:600;color:var(--muted);padding:6px 12px;border-radius:999px}
+.steps li.on{background:var(--soft);color:var(--pick)}
+.steps li.done{color:var(--ink)}
+.steps li.done::before{content:"✓ ";color:var(--good)}
+main.band{padding-block:24px 40px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.col{display:flex;flex-direction:column;gap:18px;min-width:0}
+h2{font-family:var(--display);font-weight:600;font-size:22px;text-transform:uppercase;letter-spacing:.02em;display:flex;gap:10px;align-items:center}
+h2 .n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--brand);color:var(--brand-ink);font-size:15px}
+.hint{color:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;color:inherit;cursor:pointer}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 16px;font-weight:600}
+.chip:hover{border-color:var(--pick)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.role{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.role b{font-size:16px}
+.role span{font-size:13px;color:var(--muted)}
+.role:hover{border-color:var(--pick)}
+.role[aria-pressed="true"]{border:2px solid var(--pick);background:var(--soft);padding:11px 13px}
+.schools{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.school{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 12px;align-items:start}
+.school:hover:not(:disabled){border-color:var(--pick)}
+.school[aria-pressed="true"]{border:2px solid var(--pick);background:var(--soft);padding:11px}
+.school:disabled{opacity:.45;cursor:not-allowed}
+.badge{grid-row:span 3;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.02em;border:3px solid}
+.sname{font-weight:700;font-size:15px;line-height:1.25}
+.conf{font-size:12px;color:var(--muted)}
+.tier{justify-self:start;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.tier.t5{background:var(--gold);border-color:var(--gold);color:#3a2a00}
+.blurb{grid-column:1/-1;font-size:13px;color:var(--muted);line-height:1.4;margin-top:4px}
+aside.side{position:sticky;top:16px;display:flex;flex-direction:column;gap:16px}
+@media (max-width:880px){aside.side{position:static}}
+.card{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--brand);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.card h3{font-family:var(--display);font-size:20px;text-transform:uppercase}
+dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;font-size:15px}
+dt{color:var(--muted)}
+dd{font-weight:600;margin:0}
+.empty{color:var(--muted)}
+label{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input{font:600 22px var(--display);width:100%;min-width:0;padding:10px 12px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px}
+.primary{background:var(--brand);color:var(--brand-ink);border:0;border-radius:6px;padding:12px 18px;font-family:var(--display);font-size:18px;text-transform:uppercase;letter-spacing:.04em}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:10px 14px;font-weight:600}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.err{color:var(--pick);font-size:14px}
+.reveal{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big div{background:var(--bg);border-radius:8px;padding:10px 12px}
+.big small{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.big b{display:block;font-family:var(--display);font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.big .ans b{color:var(--pick)}
+.verdict{font-weight:700;font-size:17px}
+.math{font-size:13px;color:var(--muted);line-height:1.45}
+.real{font-size:14px;background:var(--soft);border-radius:8px;padding:10px 12px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+summary{cursor:pointer;font-weight:700}
+details p,details li{font-size:14px;color:var(--muted)}
+details ul{padding-left:20px;display:flex;flex-direction:column;gap:4px;margin-top:8px}
+details p{margin-top:8px}
+footer.band{padding-block:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.reveal{animation:up .3s ease-out}}
+@keyframes up{from{transform:translateY(6px);opacity:.5}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<header class="band"><div class="inner">
+  <div>
+    <h1>Guess the Bag</h1>
+    <p class="sub">Build a college athlete: sport, position, role, school. Guess their yearly NIL value, then see how close you got.</p>
+  </div>
+  <div class="score" aria-live="polite">
+    <div><b id="sRounds">0</b><small>Rounds</small></div>
+    <div><b id="sPts">0</b><small>Points</small></div>
+    <div><b id="sBest">–</b><small>Best</small></div>
+  </div>
+</div></header>
+
+<nav class="band" aria-label="Progress"><div class="inner">
+  <ol class="steps" id="steps"></ol>
+</div></nav>
+
+<main class="band"><div class="inner grid">
+  <div class="col">
+    <section class="panel"><h2><span class="n">1</span>Pick a sport</h2><div class="chips" id="cSport"></div></section>
+    <section class="panel"><h2><span class="n">2</span>Pick a position</h2><div class="chips" id="cPos"></div></section>
+    <section class="panel"><h2><span class="n">3</span>Pick a role</h2><div class="roles" id="cRole"></div></section>
+    <section class="panel">
+      <h2><span class="n">4</span>Pick a school</h2>
+      <p class="hint" id="schoolHint">The school sets how much the market pays. Its rating changes with the sport you picked.</p>
+      <div class="schools" id="cSchool"></div>
+    </section>
+    <details>
+      <summary>How we price a player</summary>
+      <p><b>Value = position base × role × school rating.</b> The position base is what a star at a top program in that sport is worth. Role scales it down: starters get 45%, backups 7%. Walk-ons get a small floor amount. The school rating (0.15 to 1.00) reflects the program’s strength, market and spending in that sport.</p>
+      <p>The bases are calibrated to real On3 valuations (College Transitions, May 2026) and Opendorse’s 2026 NIL report. When your build matches a real athlete, you are scored against the real number instead of our model.</p>
+      <ul>
+        <li>Texas star QB: model $5.4M, real $5.4M (Arch Manning)</li>
+        <li>USC starting QB: model $2.3M, real $2.4M (Jayden Maiava)</li>
+        <li>Purdue star guard: model $1.9M, real $1.7M (Braden Smith)</li>
+        <li>Average football deal is about $5,900; average softball deal is $323</li>
+      </ul>
+      <p>It is a class model, not a pay database. Phenoms, viral athletes and bidding wars break it, and the game tells you when that happens.</p>
+    </details>
+  </div>
+
+  <aside class="side">
+    <section class="card" aria-live="polite">
+      <h3>Your player</h3>
+      <dl>
+        <dt>Sport</dt><dd id="vSport">–</dd>
+        <dt>Position</dt><dd id="vPos">–</dd>
+        <dt>Role</dt><dd id="vRole">–</dd>
+        <dt>School</dt><dd id="vSchool">–</dd>
+      </dl>
+      <form id="form" style="display:flex;flex-direction:column;gap:8px">
+        <label for="guess">Your guess, per year</label>
+        <input id="guess" inputmode="decimal" autocomplete="off" placeholder="e.g. 750k or 2.1m" disabled>
+        <button class="primary" type="submit" id="lock" disabled>Lock it in</button>
+        <p class="err" id="err" hidden>Type a dollar amount, like 5000, 750k or 2.1m.</p>
+        <p class="hint" id="need">Finish all four steps to guess.</p>
+      </form>
+      <div class="reveal" id="reveal" hidden>
+        <div class="big">
+          <div><small>You said</small><b id="rGuess"></b></div>
+          <div class="ans"><small id="rKind">Answer</small><b id="rAns"></b></div>
+        </div>
+        <p class="verdict" id="rVerdict"></p>
+        <p class="real" id="rReal" hidden></p>
+        <p class="math" id="rMath"></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="primary" type="button" id="again">New player</button>
+          <button class="ghost" type="button" id="swap">Same player, new school</button>
+        </div>
+      </div>
+    </section>
+  </aside>
+</div></main>
+
+<footer class="band"><div class="inner">
+  Real valuations: On3 NIL Valuations as published by College Transitions, May 2026. Deal averages: Opendorse Annual NIL Report, June 2026. Aquatics comparison: Team 3 interview, November 2026. School badges use initials and colors, not official logos. BUAD 304, Team 3.
+</div></footer>
+
+<script>
+var SPORTS=[
+ {id:'fb',name:'Football',floor:2000,pos:[['QB',5400000],['WR',4200000],['EDGE rusher',2500000],['RB',1800000],['DL',1500000],['DB',1400000],['OL',1200000],['LB',1000000],['TE',900000],['Specialist (K/P/LS)',150000]]},
+ {id:'mbb',name:'Men’s Basketball',floor:3000,pos:[['Wing',3000000],['Guard',2200000],['Big',2000000]]},
+ {id:'wbb',name:'Women’s Basketball',floor:1500,pos:[['Guard',1400000],['Forward',900000],['Center',700000]]},
+ {id:'bsb',name:'Baseball',floor:400,pos:[['Pitcher',250000],['Position player',200000]]},
+ {id:'sb',name:'Softball',floor:300,pos:[['Pitcher',450000],['Position player',200000]]},
+ {id:'vb',name:'Women’s Volleyball',floor:500,pos:[['Outside hitter',180000],['Setter',120000],['Middle blocker',90000],['Libero',60000]]},
+ {id:'aq',name:'Aquatics',floor:0,pos:[['Swimmer or diver',80000],['Water polo',40000]]}
+];
+var ROLES=[
+ {id:'star',name:'Star',d:'All-American. The face of the team.',m:1},
+ {id:'starter',name:'Starter',d:'Starts every game, not a household name.',m:.45},
+ {id:'backup',name:'Backup',d:'Rotation player or second string.',m:.07},
+ {id:'walkon',name:'Walk-on',d:'Scout team, no scholarship.',m:0}
+];
+// ratings: fb, mbb, wbb, bsb, sb, vb, aq (null = no varsity team)
+var SCHOOLS=[
+ {id:'usc',name:'USC',conf:'Big Ten · Los Angeles',c:['#990000','#FFC72C'],ab:'SC',r:{fb:.95,mbb:.6,wbb:.8,bsb:.55,sb:null,vb:.75,aq:.85},b:'Eight Heisman winners and a top-two U.S. media market. Brand does a lot of the work here.'},
+ {id:'tex',name:'Texas',conf:'SEC · Austin',c:['#BF5700','#FFFFFF'],ab:'UT',r:{fb:1,mbb:.65,wbb:.85,bsb:.8,sb:1,vb:1,aq:.95},b:'One of the richest athletic departments in the country, and a contender in almost every sport.'},
+ {id:'osu',name:'Ohio State',conf:'Big Ten · Columbus',c:['#BB0000','#A7B1B7'],ab:'OSU',r:{fb:1,mbb:.6,wbb:.7,bsb:.45,sb:.5,vb:.55,aq:.6},b:'Won the 2024 season’s football national title. Owns the whole state on Saturdays.'},
+ {id:'bama',name:'Alabama',conf:'SEC · Tuscaloosa',c:['#9E1B32','#828A8F'],ab:'UA',r:{fb:.95,mbb:.75,wbb:.5,bsb:.6,sb:.75,vb:.4,aq:.55},b:'A football dynasty that sends players to the NFL every spring. Basketball is on the rise.'},
+ {id:'lsu',name:'LSU',conf:'SEC · Baton Rouge',c:['#461D7C','#FDD023'],ab:'LSU',r:{fb:.9,mbb:.5,wbb:1,bsb:1,sb:.75,vb:.45,aq:.5},b:'Won the 2023 women’s basketball title and is a baseball powerhouse. Loud crowds everywhere.'},
+ {id:'uconn',name:'UConn',conf:'Big East · Storrs',c:['#000E2F','#E4002B'],ab:'UC',r:{fb:.15,mbb:1,wbb:.95,bsb:.5,sb:.3,vb:.2,aq:.3},b:'The winningest program in women’s basketball, and men’s champions in 2023 and 2024. Football is an afterthought.'},
+ {id:'duke',name:'Duke',conf:'ACC · Durham',c:['#003087','#FFFFFF'],ab:'DU',r:{fb:.45,mbb:1,wbb:.75,bsb:.6,sb:.6,vb:.3,aq:.4},b:'Men’s basketball royalty. Every top recruit gets the national TV spotlight.'},
+ {id:'ore',name:'Oregon',conf:'Big Ten · Eugene',c:['#154733','#FEE123'],ab:'UO',r:{fb:.95,mbb:.6,wbb:.55,bsb:.6,sb:.8,vb:.5,aq:null},b:'Nike’s backyard, with the uniforms and the boosters to match.'},
+ {id:'byu',name:'BYU',conf:'Big 12 · Provo',c:['#002E5D','#FFFFFF'],ab:'BYU',r:{fb:.55,mbb:.75,wbb:.45,bsb:.4,sb:.4,vb:.65,aq:.45},b:'A loyal national fan base and fast-growing NIL budgets, especially in basketball.'},
+ {id:'ttu',name:'Texas Tech',conf:'Big 12 · Lubbock',c:['#CC0000','#000000'],ab:'TT',r:{fb:.7,mbb:.75,wbb:.45,bsb:.75,sb:.8,vb:.35,aq:.3},b:'Small market, big spender. Boosters have paid for headline transfers.'},
+ {id:'pur',name:'Purdue',conf:'Big Ten · West Lafayette',c:['#000000','#CEB888'],ab:'PU',r:{fb:.35,mbb:.85,wbb:.4,bsb:.4,sb:.45,vb:.7,aq:.5},b:'A steady men’s basketball contender built on players who stay four years.'},
+ {id:'stan',name:'Stanford',conf:'ACC · Palo Alto',c:['#8C1515','#FFFFFF'],ab:'SU',r:{fb:.35,mbb:.45,wbb:.8,bsb:.75,sb:.75,vb:.9,aq:1},b:'More NCAA team titles than any school, mostly in Olympic sports like swimming and volleyball.'},
+ {id:'neb',name:'Nebraska',conf:'Big Ten · Lincoln',c:['#E41C38','#FFFFFF'],ab:'NU',r:{fb:.55,mbb:.45,wbb:.5,bsb:.45,sb:.5,vb:1,aq:.3},b:'Set the women’s sports attendance record with 92,003 fans at a 2023 volleyball match.'},
+ {id:'unlv',name:'UNLV',conf:'Mountain West · Las Vegas',c:['#CF0A2C','#8A8D8F'],ab:'UNLV',r:{fb:.4,mbb:.4,wbb:.35,bsb:.3,sb:.3,vb:.25,aq:.25},b:'Big-city market on a Group of 5 budget. A common first stop before the portal.'},
+ {id:'msu',name:'Montana State',conf:'FCS · Bozeman',c:['#003875','#B9975B'],ab:'MSU',r:{fb:.2,mbb:.25,wbb:.25,bsb:null,sb:.2,vb:.2,aq:null},b:'A small-school football power with a fraction of a Power 4 budget.'}
+];
+var ON3='On3 valuation, May 2026';
+var ANCHORS=[
+ {k:'fb|QB|star|tex',who:'Arch Manning, QB, Texas',v:5400000,src:ON3},
+ {k:'fb|QB|starter|usc',who:'Jayden Maiava, QB, USC',v:2400000,src:ON3},
+ {k:'fb|WR|star|osu',who:'Jeremiah Smith, WR, Ohio State',v:4200000,src:ON3,note:'The top non-quarterback in college football.'},
+ {k:'mbb|Wing|star|byu',who:'AJ Dybantsa, F, BYU',v:4200000,src:ON3,note:'A projected top NBA pick. Phenoms blow past the model.'},
+ {k:'mbb|Guard|star|pur',who:'Braden Smith, G, Purdue',v:1700000,src:ON3},
+ {k:'wbb|Guard|star|lsu',who:'Flau’jae Johnson, G, LSU',v:1500000,src:ON3,note:'Also a signed recording artist, which adds to her value.'},
+ {k:'wbb|Guard|star|usc',who:'JuJu Watkins, G, USC',v:1000000,src:ON3},
+ {k:'wbb|Guard|star|uconn',who:'Azzi Fudd, G, UConn',v:779000,src:ON3},
+ {k:'sb|Pitcher|star|ttu',who:'NiJaree Canady, P, Texas Tech',v:1000000,src:ON3,note:'A headline transfer deal. Bidding wars break the model.'},
+ {k:'aq|*|backup|usc',who:'Our interviewee, a USC aquatics sophomore',v:0,src:'Team 3 interview, Nov 2026',note:'“Our team gets some perks here and there but as far as me personally, no.”'},
+ {k:'aq|*|starter|usc',who:'Our interviewee, a USC aquatics sophomore',v:0,src:'Team 3 interview, Nov 2026',note:'“Our team gets some perks here and there but as far as me personally, no.”'}
+];
+var st={sport:null,pos:null,role:null,school:null},locked=false,rounds=0,pts=0,best=null,played={};
+function $(id){return document.getElementById(id)}
+function sport(){return SPORTS.filter(function(s){return s.id===st.sport})[0]||null}
+function role(){return ROLES.filter(function(r){return r.id===st.role})[0]||null}
+function school(){return SCHOOLS.filter(function(s){return s.id===st.school})[0]||null}
+function base(){var s=sport();if(!s||!st.pos)return 0;return s.pos.filter(function(p){return p[0]===st.pos})[0][1]}
+function tier(r){
+  if(r===null)return['No team','t0'];
+  if(r>=.9)return['Blue blood','t5'];
+  if(r>=.7)return['Contender','t4'];
+  if(r>=.45)return['Power conference','t3'];
+  if(r>=.25)return['Mid-major','t2'];
+  return['Small program','t1'];
+}
+function money(n){
+  if(n>=1e6)return '$'+(Math.round(n/1e4)/100)+'M';
+  if(n>=1e4)return '$'+Math.round(n/1e3)+'K';
+  return '$'+Math.round(n).toLocaleString('en-US');
+}
+function model(){
+  var s=sport(),r=role(),sc=school();
+  var rating=sc.r[s.id];
+  if(r.id==='walkon'){return{v:Math.round(s.floor*(.5+rating*.5)),math:'Walk-on floor for '+s.name+' ('+money(s.floor)+') adjusted by '+sc.name+'’s rating of '+rating.toFixed(2)+'.'}}
+  var v=base()*r.m*rating;
+  return{v:v,math:'Star '+st.pos+' at a top program '+money(base())+' × '+r.name.toLowerCase()+' '+r.m+' × '+sc.name+' '+s.name.toLowerCase()+' rating '+rating.toFixed(2)+' = '+money(v)+'.'};
+}
+function anchor(){
+  var keys=[st.sport+'|'+st.pos+'|'+st.role+'|'+st.school,st.sport+'|*|'+st.role+'|'+st.school];
+  return ANCHORS.filter(function(a){return keys.indexOf(a.k)>-1})[0]||null;
+}
+function parse(t){
+  var m=String(t).toLowerCase().replace(/[$,\s]/g,'').match(/^(\d*\.?\d+)(k|m|mil|million|thousand)?$/);
+  if(!m)return null;
+  var n=parseFloat(m[1]);
+  if(m[2])n*=(m[2].charAt(0)==='k'||m[2]==='thousand')?1e3:1e6;
+  return n;
+}
+function score(g,a){
+  if(a<1)return g<1?100:Math.max(0,Math.round(60-20*Math.log10(Math.max(g,1))));
+  if(g<=0)return 0;
+  return Math.max(0,Math.round(100-50*Math.abs(Math.log10(g/a))));
+}
+function verdict(g,a){
+  if(a<1)return g<1?'Dead on. Nothing at all.':(g<=1000?'Close. The real answer is nothing.':'He’d love that. Reality is zero.');
+  if(g<=0)return 'Zero? Tough crowd.';
+  var r=Math.max(g/a,a/g);
+  if(r<=1.1)return 'Dead on. Somebody hire you as a GM.';
+  if(r<=1.35)return 'Close enough to negotiate.';
+  if(r<=2)return 'Right neighborhood, wrong house.';
+  if(r<=10)return (g<a?'You lowballed them. ':'You overpaid. ')+'Off by '+(Math.round(r*10)/10)+'x.';
+  return 'Not even the same tax bracket. Off by '+Math.round(r).toLocaleString('en-US')+'x.';
+}
+function chip(label,on,fn){var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=label;b.setAttribute('aria-pressed',on?'true':'false');b.addEventListener('click',fn);return b}
+function set(k,v){
+  if(locked)return;
+  st[k]=v;
+  if(k==='sport'){st.pos=null;if(st.school&&school().r[v]===null)st.school=null}
+  render();
+}
+function render(){
+  var s=sport();
+  var cs=$('cSport');cs.textContent='';
+  SPORTS.forEach(function(x){cs.appendChild(chip(x.name,st.sport===x.id,function(){set('sport',x.id)}))});
+  var cp=$('cPos');cp.textContent='';
+  if(!s){cp.innerHTML='<span class="empty">Pick a sport first.</span>'}
+  else s.pos.forEach(function(p){cp.appendChild(chip(p[0],st.pos===p[0],function(){set('pos',p[0])}))});
+  var cr=$('cRole');cr.textContent='';
+  ROLES.forEach(function(r){
+    var b=document.createElement('button');b.type='button';b.className='role';b.setAttribute('aria-pressed',st.role===r.id?'true':'false');
+    var t=document.createElement('b');t.textContent=r.name;var d=document.createElement('span');d.textContent=r.d;
+    b.appendChild(t);b.appendChild(d);b.addEventListener('click',function(){set('role',r.id)});cr.appendChild(b);
+  });
+  var csc=$('cSchool');csc.textContent='';
+  $('schoolHint').textContent=s?'Ratings shown for '+s.name+'. Grayed-out schools have no varsity team in this sport.':'The school sets how much the market pays. Pick a sport to see each school’s rating.';
+  SCHOOLS.forEach(function(x){
+    var r=s?x.r[s.id]:undefined,tr=s?tier(r):null;
+    var b=document.createElement('button');b.type='button';b.className='school';b.setAttribute('aria-pressed',st.school===x.id?'true':'false');
+    if(s&&r===null)b.disabled=true;
+    var bd=document.createElement('span');bd.className='badge';bd.textContent=x.ab;bd.style.background=x.c[0];bd.style.color=x.c[1]==='#000000'?'#FFFFFF':x.c[1];bd.style.borderColor=x.c[1];bd.setAttribute('aria-hidden','true');
+    if(x.ab.length>3)bd.style.fontSize='14px';
+    var n=document.createElement('span');n.className='sname';n.textContent=x.name;
+    var c=document.createElement('span');c.className='conf';c.textContent=x.conf;
+    b.appendChild(bd);b.appendChild(n);b.appendChild(c);
+    if(tr){var t=document.createElement('span');t.className='tier '+tr[1];t.textContent=r===null?'No team':tr[0]+' · '+r.toFixed(2);b.appendChild(t)}
+    else{var sp=document.createElement('span');b.appendChild(sp)}
+    var bl=document.createElement('span');bl.className='blurb';bl.textContent=x.b;b.appendChild(bl);
+    b.addEventListener('click',function(){set('school',x.id)});
+    csc.appendChild(b);
+  });
+  $('vSport').textContent=s?s.name:'–';
+  $('vPos').textContent=st.pos||'–';
+  $('vRole').textContent=role()?role().name:'–';
+  $('vSchool').textContent=school()?school().name:'–';
+  var ready=!!(s&&st.pos&&st.role&&st.school);
+  $('guess').disabled=!ready||locked;$('lock').disabled=!ready||locked;$('need').hidden=ready;
+  var names=['Sport','Position','Role','School','Guess'],done=[!!s,!!st.pos,!!st.role,!!st.school,locked];
+  var ol=$('steps');ol.textContent='';
+  var cur=done.indexOf(false);
+  names.forEach(function(nm,i){var li=document.createElement('li');li.textContent=(i+1)+'. '+nm;if(done[i])li.className='done';else if(i===cur)li.className='on';ol.appendChild(li)});
+}
+$('form').addEventListener('submit',function(e){
+  e.preventDefault();
+  if(locked||$('lock').disabled)return;
+  var g=parse($('guess').value);
+  if(g===null){$('err').hidden=false;return}
+  $('err').hidden=true;
+  var m=model(),a=anchor(),ans=a?a.v:m.v,sc=score(g,ans);
+  var key=st.sport+st.pos+st.role+st.school;
+  if(!played[key]){played[key]=1;rounds++;pts+=sc;best=best===null?sc:Math.max(best,sc)}
+  $('sRounds').textContent=rounds;$('sPts').textContent=pts;$('sBest').textContent=best===null?'–':best;
+  $('rGuess').textContent=money(g);
+  $('rKind').textContent=a?'Real value':'Our model';
+  $('rAns').textContent=money(ans);
+  $('rVerdict').textContent=verdict(g,ans)+' +'+sc+' pts';
+  if(a){$('rReal').hidden=false;$('rReal').textContent='Real match: '+a.who+', '+money(a.v)+' ('+a.src+'). Our model said '+money(m.v)+'. '+(a.note||'')}
+  else{$('rReal').hidden=true}
+  $('rMath').textContent='How we got there: '+m.math;
+  $('reveal').hidden=false;locked=true;render();
+});
+$('again').addEventListener('click',function(){st={sport:null,pos:null,role:null,school:null};locked=false;$('guess').value='';$('reveal').hidden=true;render();window.scrollTo({top:0,behavior:'smooth'})});
+$('swap').addEventListener('click',function(){st.school=null;locked=false;$('guess').value='';$('reveal').hidden=true;render();$('cSchool').scrollIntoView({behavior:'smooth',block:'start'})});
+render();
+</script>
+</body>
+</html>
